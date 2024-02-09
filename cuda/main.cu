@@ -1,5 +1,6 @@
 #include<iostream>
 #include "time.h"
+#include "vec3.h"
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
 void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {
     if (result) {
@@ -12,14 +13,12 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
 }
 
 __global__
-void render(float *fb, int max_x, int max_y){
+void render(vec3 *fb, int max_x, int max_y){
     int i = threadIdx.x+blockIdx.x*blockDim.x;
     int j = threadIdx.y+blockIdx.y*blockDim.y;
     if((i>max_x)||(j>=max_y)) return;
-    int pixel_index = j*max_x*3 + i*3;
-    fb[pixel_index + 0] = float(i) / max_x;
-    fb[pixel_index + 1] = float(j) / max_y;
-    fb[pixel_index + 2] = 0.2;
+    int pixel_index = j*max_x + i;
+    fb[pixel_index] = vec3( double (i) / max_x, double (j) / max_y, 0.2f);
 }
 
 int main() {
@@ -29,8 +28,8 @@ int main() {
     std::cerr<<"need write size of image?"<<std::endl;
     std::cin>>in;
 
-    int image_width = 8;
-    int image_height = 8;
+    int image_width = 1600;
+    int image_height = 1000;
 
     int block_x=8,block_y=8;
 
@@ -42,17 +41,15 @@ int main() {
         std::cerr<<"image_height: ";
         std::cin>>image_height;
         std::cerr<<'\n';
-        block_x=image_width;
-        block_y=image_height;
     }
-    std::cerr << "Rendering a " << image_width << "x" << image_width << " image ";
+    std::cerr << "Rendering a " << image_width << "x" << image_height << " image ";
     std::cerr << "in " << block_x << "x" << block_y << " blocks.\n";
 
     int num_pixels = image_width*image_height;
-    size_t fb_size = 3*num_pixels*sizeof(float);
+    size_t fb_size = num_pixels*sizeof(vec3);
 
     // allocate FB
-    float *fb;
+    vec3 *fb;
     //统一内存
     checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
 
@@ -62,7 +59,7 @@ int main() {
     // Render
     dim3 blocks(image_width/block_x+1,image_height/block_y+1);
     dim3 threads(block_x,block_y);
-    render<<<blocks, threads>>>(fb, block_x, block_y);
+    render<<<blocks, threads>>>(fb, image_width, image_height);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
     stop = clock();
@@ -72,15 +69,12 @@ int main() {
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
     for (int j = image_height-1; j >= 0; j--) {
-        std::clog << "\rScanlines remaining: ------------------" << image_height - j << ' ' << std::flush;
+        std::clog << "\rScanlines remaining: ------------------" << j << ' ' << std::flush;
         for (int i = 0; i < image_width; i++) {
-            size_t pixel_index = j*3*image_width + i*3;
-            float r = fb[pixel_index + 0];
-            float g = fb[pixel_index + 1];
-            float b = fb[pixel_index + 2];
-            int ir = int(255.99*r);
-            int ig = int(255.99*g);
-            int ib = int(255.99*b);
+            size_t pixel_index = j*image_width + i;
+            int ir = int(255.99*fb[pixel_index].x());
+            int ig = int(255.99*fb[pixel_index].y());
+            int ib = int(255.99*fb[pixel_index].z());
             std::cout << ir << " " << ig << " " << ib << "\n";
         }
     }
