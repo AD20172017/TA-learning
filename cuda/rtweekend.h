@@ -42,10 +42,9 @@ inline double random_double(double min, double max) {
 
 static double min_error=0.0001;
 static double reflect_rate=0.9;
-/*#include "ray.h"
-#include "vec3.h"
+
+/*#include "vec3.h"
 #include "interval.h"
-#include "color.h"
 #include "material.h"*/
 
 #endif //RAYTRACING_RTWEEKEND_H
