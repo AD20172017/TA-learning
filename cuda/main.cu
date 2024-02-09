@@ -12,10 +12,21 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
         exit(99);
     }
 }
+//这个圆貌似会随着图片尺寸形变,之后还要添加视口
+__device__ bool hit_sphere(const vec3& center, double radius, const ray& r) {
+    vec3 oc = r.origin() - center;
+    double a = dot(r.direction(), r.direction());
+    double b = 2.0f * dot(oc, r.direction());
+    double c = dot(oc, oc) - radius*radius;
+    double discriminant = b*b - 4.0f*a*c;
+    return (discriminant > 0.0f);
+}
 
 __device__ vec3 color(const ray& r) {
+    if (hit_sphere(vec3(0,0,-1), 0.5, r))
+        return vec3(0.5,0.7,0.2);
     vec3 unit_direction = unit_vector(r.direction());
-    float t = 0.5f*(unit_direction.y() + 1.0f);
+    double t = 0.5f*(unit_direction.y() + 1.0f);
     return (1.0f-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
 }
 
@@ -26,8 +37,8 @@ void render(vec3 *fb, int max_x, int max_y ,
     int j = threadIdx.y+blockIdx.y*blockDim.y;
     if((i>max_x)||(j>=max_y)) return;
     int pixel_index = j*max_x + i;
-    float u = float(i) / float(max_x);
-    float v = float(j) / float(max_y);
+    double u = double(i) / double(max_x);
+    double v = double(j) / double(max_y);
     ray r(origin, lower_left_corner + u*horizontal + v*vertical);
     fb[pixel_index] = color(r);
 }
@@ -39,8 +50,8 @@ int main() {
     std::cerr<<"need write size of image?"<<std::endl;
     std::cin>>in;
 
-    int image_width = 1600;
-    int image_height = 1000;
+    int image_width = 256;
+    int image_height = 184;
 
     int block_x=8,block_y=8;
 
