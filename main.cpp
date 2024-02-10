@@ -1,7 +1,7 @@
 #include "rtweekend.h"
 #include "hittable_list.h"
 #include "sphere.h"
-
+#include "time.h"
 #include "camera.h"
 //2023版
 
@@ -34,7 +34,14 @@
 
 int main() {
 
+    #if _OPENMP
+    std::cerr << " support openmp " << std::endl;
+    #else
+    std::cerr << " not support openmp" << std::endl;
+    #endif
 
+    clock_t start, stop;
+    start = clock();
     //world
     hittable_list world;
 
@@ -98,7 +105,8 @@ int main() {
                     // diffuse
                     auto albedo = color::random() * color::random();
                     sphere_material = make_shared<lambertian>(albedo);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                    auto center2 = center + vec3(0, random_double(0,.5), 0);
+                    world.add(make_shared<sphere>(center, center2, 0.2, sphere_material));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = color::random(0.5, 1);
@@ -126,8 +134,8 @@ int main() {
     camera cam;
 
     cam.aspect_ratio      = 16.0 / 9.0;
-    cam.image_width       = 1200;
-    cam.samples_per_pixel = 100;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 30;
     cam.max_depth         = 50;
 
     cam.vfov     = 20;
@@ -140,6 +148,9 @@ int main() {
 
     cam.render(world);
 
+    stop = clock();
+    double timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
+    std::cerr << "took " << timer_seconds << " seconds.\n";
 
 
 
