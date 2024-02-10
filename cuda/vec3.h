@@ -51,11 +51,6 @@ public:
         return e[0]*e[0] + e[1]*e[1] + e[2]*e[2];
     }
 
-    __host__ __device__ inline static vec3 random() {
-
-        return vec3(random_double(), random_double(), random_double());
-    }
-
     __host__ __device__ inline static vec3 random(double min, double max) {
         return vec3(random_double(min,max), random_double(min,max), random_double(min,max));
     }
@@ -125,16 +120,16 @@ __host__ __device__ inline vec3 random_in_unit_sphere() {
     }
 }
 
-__host__ __device__ inline vec3 random_unit_vector() {
-    auto a = random_double(0, 2*pi);
-    auto z = random_double(-1, 1);
+__host__ __device__ inline vec3 random_unit_vector(curandState *rand_state) {
+    auto a = random_double(0, 2*pi, rand_state);
+    auto z = random_double(-1, 1, rand_state);
     auto r = sqrt(1 - z*z);
     return vec3(r*cos(a), r*sin(a), z);
     //return unit_vector(random_in_unit_sphere());
 }
 
-__host__ __device__ inline vec3 random_on_hemisphere(const vec3& normal) {
-    vec3 on_unit_sphere = random_unit_vector();
+__host__ __device__ inline vec3 random_on_hemisphere(const vec3& normal, curandState *rand_state) {
+    vec3 on_unit_sphere = random_unit_vector(rand_state);
     if (dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
         return on_unit_sphere;
     else
@@ -152,9 +147,9 @@ __host__ __device__ inline vec3 refract(const vec3& uv, const vec3& n, double et
     return r_out_perp + r_out_parallel;
 }
 
-__host__ __device__ vec3 random_in_unit_disk() {
+__host__ __device__ vec3 random_in_unit_disk(curandState *rand_state) {
     while (true) {
-        auto p = vec3(random_double(-1,1), random_double(-1,1), 0);
+        auto p = vec3(random_double(-1,1, rand_state), random_double(-1,1, rand_state), 0);
         if (p.length_squared() >= 1) continue;
         return p;
     }

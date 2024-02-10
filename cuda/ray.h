@@ -10,14 +10,14 @@
 
 class ray{
 public:
-    __device__ ray(){}
-    __device__ ray(const vec3& origin, const vec3& direction)
+    __host__ __device__ ray(){}
+    __host__ __device__ ray(const vec3& origin, const vec3& direction)
     : ori(origin), dir(direction){}
 
-    __device__ vec3 origin() const {return ori;}
-    __device__ vec3 direction() const {return dir;}
+    __host__ __device__ vec3 origin() const {return ori;}
+    __host__ __device__ vec3 direction() const {return dir;}
 
-    __device__ vec3 at(double t) const {
+    __host__ __device__ vec3 at(double t) const {
         return ori + t * dir;
     }
 

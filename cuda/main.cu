@@ -1,7 +1,12 @@
+// -*- coding: gbk -*-
 #include<iostream>
 #include "time.h"
 #include "vec3.h"
 #include "ray.h"
+#include "hittable_list.h"
+#include "sphere.h"
+#include "camera.h"
+#include "material.h"
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
 void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {
     if (result) {
@@ -12,7 +17,19 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
         exit(99);
     }
 }
-//杩欎釜鍦嗚矊浼间細闅忕潃鍥剧墖灏哄褰㈠彉,涔嬪悗杩樿娣诲姞瑙嗗彛
+
+void get_gpu(){
+    int dev=0;
+    cudaDeviceProp devProp;
+    checkCudaErrors(cudaGetDeviceProperties(&devProp, dev));
+    std::cerr << "GPU device "<< dev<<':'<<devProp.name<<std::endl;
+    std::cerr << "SM 个数: "<< devProp.multiProcessorCount<<std::endl;
+    std::cerr << "每个线程块的共享内存大小: "<< devProp.sharedMemPerBlock/1024.0 <<"KB"<<std::endl;
+    std::cerr << "每个线程块最大线程数: "<< devProp.maxThreadsPerBlock<<std::endl;
+    std::cerr << "每个EM的最大线程数: "<< devProp.maxThreadsPerMultiProcessor<<std::endl;
+    std::cerr << "每个SM的最大线程数: "<< devProp.maxThreadsPerMultiProcessor/32<<std::endl;
+}
+//这个圆貌似会随着图片尺寸形变,之后还要添加视口
 __device__ bool hit_sphere(const vec3& center, double radius, const ray& r) {
     vec3 oc = r.origin() - center;
     double a = dot(r.direction(), r.direction());
@@ -45,6 +62,8 @@ void render(vec3 *fb, int max_x, int max_y ,
 
 int main() {
 
+    get_gpu();
+
     // Image
     bool in= false;
     std::cerr<<"need write size of image?"<<std::endl;
@@ -72,7 +91,7 @@ int main() {
 
     // allocate FB
     vec3 *fb;
-    //缁熶竴鍐呭瓨
+    //统一内存
     checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
 
     clock_t start, stop;
