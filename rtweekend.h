@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <limits>
 #include <memory>
-
+#include "random"
 
 // Usings
 
@@ -34,7 +34,19 @@ inline double random_double() {
     // Returns a random real in [0,1).
     return rand() / (RAND_MAX + 1.0);
 }
+inline int random_int(int min,int max){
+    //[min,max]
+    //return min+rand()%(max-min+1);
+    //or
+    //return static_cast<int>(random_double(min, max+1));
+    std::random_device rd;  // Obtain a random number from hardware
+    std::mt19937 eng(rd()); // Seed the generator
 
+    std::uniform_int_distribution<> distr(min, max); // Define the range
+
+    int random_number = distr(eng);  // Generate a random number in the range
+    return  random_number;
+}
 inline double random_double(double min, double max) {
     // Returns a random real in [min,max).
     return min + (max-min)*random_double();

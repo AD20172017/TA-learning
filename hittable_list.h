@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 #include "omp.h"
-
+#include "aabb.h"
 using std::shared_ptr;
 using std::make_shared;
 
@@ -18,10 +18,20 @@ public:
     hittable_list(shared_ptr<hittable> obj){add(obj);}
 
     void clear(){objects.clear();}
-    void add(shared_ptr<hittable> object) { objects.push_back(object); }
+    void add(shared_ptr<hittable> object) {
+        objects.push_back(object);
+        bbox=aabb(bbox,object->bounding_box());
+    }
     virtual bool hit(const ray &r, interval ray_t, hit_record &rec) const;
-public:
+    aabb bounding_box() const override { return bbox; }
+
+    const std::vector<shared_ptr<hittable>>& objs()const{
+        return objects;
+    }
+private:
     std::vector<shared_ptr<hittable>> objects;
+
+    aabb bbox;
 };
 
 bool hittable_list::hit(const ray &r, interval ray_t, hit_record &rec) const{
