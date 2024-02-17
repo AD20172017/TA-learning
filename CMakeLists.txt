@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.21)
 ENABLE_LANGUAGE(CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fopenmp")
 FIND_PACKAGE(OpenMP REQUIRED)
@@ -11,4 +11,4 @@ project(RayTracing)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(RayTracing main.cpp vec3.h ray.h color.h hittable.h sphere.h hittable_list.h rtweekend.h interval.h camera.h material.h aabb.h bvh.h)
+add_executable(RayTracing main.cpp vec3.h ray.h color.h hittable.h sphere.h hittable_list.h rtweekend.h interval.h camera.h material.h aabb.h bvh.h texture.h)

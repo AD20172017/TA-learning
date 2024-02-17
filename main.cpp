@@ -4,6 +4,8 @@
 #include "ctime"
 #include "camera.h"
 #include "bvh.h"
+#include "texture.h"
+#include "material.h"
 //2023版
 
 /*double hit_sphere(const point3& center, double radius, const ray& r) {
@@ -45,7 +47,8 @@ int main() {
     start = clock();
     //world
     hittable_list world;
-
+    auto checker = make_shared<checker_tex>(0.32, color(.2, .3, .1), color(.9, .9, .9));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
     //world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
     /*auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
     auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
