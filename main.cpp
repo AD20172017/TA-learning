@@ -34,65 +34,14 @@
     return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
 }*/
 
-
-int main() {
-
-    #if _OPENMP
-    std::cerr << " support openmp " << std::endl;
-    #else
-    std::cerr << " not support openmp" << std::endl;
-    #endif
-
+void random_sphere() {
+    hittable_list world;
     clock_t start, stop;
     start = clock();
-    //world
-    hittable_list world;
+
     auto checker = make_shared<checker_tex>(0.32, color(.2, .3, .1), color(.9, .9, .9));
     world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
-    //world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
-    /*auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-    auto material_left   = make_shared<dielectric>(1.5);
-    auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
 
-    world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
-    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),  -0.4, material_left));
-    world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-    camera cam;
-
-    cam.aspect_ratio=16.0 / 9.0;
-    cam.image_width= 400;
-    cam.samples_per_pixel=100;
-    cam.max_depth=20;
-    cam.render(world);*/
-
-    /* auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-     auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-     auto material_left   = make_shared<dielectric>(1.5);
-     auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
-
-     world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
-     world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
-     world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-     world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),  -0.4, material_left));
-     world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-
-     camera cam;
-
-     cam.aspect_ratio      = 16.0 / 9.0;
-     cam.image_width       = 400;
-     cam.samples_per_pixel = 100;
-     cam.max_depth         = 50;
-
-
-     cam.vfov     = 90;
-     cam.lookfrom = point3(-2,2,1);
-     cam.lookat   = point3(0,0,-1);
-     cam.vup      = vec3(0,1,0);
-     cam.defocus_angle=10.0;
-     cam.focus_dist =3.4;*/
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
 
@@ -154,6 +103,117 @@ int main() {
     stop = clock();
     double timer_seconds = ((double) (stop - start)) / CLOCKS_PER_SEC;
     std::cerr << "took " << timer_seconds << " seconds.\n";
+
+}
+
+void two_spheres() {
+    hittable_list world;
+
+    auto checker = make_shared<checker_tex>(0.8, color(.2, .3, .1), color(.9, .9, .9));
+
+    world.add(make_shared<sphere>(point3(0, -10, 0), 10, make_shared<lambertian>(checker)));
+    world.add(make_shared<sphere>(point3(0, 10, 0), 10, make_shared<lambertian>(checker)));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(13, 2, 3);
+    cam.lookat = point3(0, 0, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void earth() {
+    auto earth_texture = make_shared<image_texture>("earthmap.jpg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    auto globe = make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(0, 0, 12);
+    cam.lookat = point3(0, 0, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(hittable_list(globe));
+}
+
+int main() {
+
+    #if _OPENMP
+    std::cerr << " support openmp " << std::endl;
+    #else
+    std::cerr << " not support openmp" << std::endl;
+    #endif
+    clock_t start, stop;
+    start = clock();
+    //two_spheres();
+    //random_sphere();
+
+    earth();
+    stop = clock();
+    double timer_seconds = ((double) (stop - start)) / CLOCKS_PER_SEC;
+    std::cerr << "took " << timer_seconds << " seconds.\n";
+    //world
+    //world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
+    /*auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
+    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
+    auto material_left   = make_shared<dielectric>(1.5);
+    auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
+
+    world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
+    world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
+    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
+    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),  -0.4, material_left));
+    world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
+    camera cam;
+
+    cam.aspect_ratio=16.0 / 9.0;
+    cam.image_width= 400;
+    cam.samples_per_pixel=100;
+    cam.max_depth=20;
+    cam.render(world);*/
+
+    /* auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
+     auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
+     auto material_left   = make_shared<dielectric>(1.5);
+     auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
+
+     world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
+     world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
+     world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
+     world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),  -0.4, material_left));
+     world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
+
+     camera cam;
+
+     cam.aspect_ratio      = 16.0 / 9.0;
+     cam.image_width       = 400;
+     cam.samples_per_pixel = 100;
+     cam.max_depth         = 50;
+
+
+     cam.vfov     = 90;
+     cam.lookfrom = point3(-2,2,1);
+     cam.lookat   = point3(0,0,-1);
+     cam.vup      = vec3(0,1,0);
+     cam.defocus_angle=10.0;
+     cam.focus_dist =3.4;*/
 
 
     return 0;
