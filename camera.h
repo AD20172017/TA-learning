@@ -14,21 +14,22 @@
 class camera {
 public:
     /* Public Camera Parameters Here */
-    double aspect_ratio= 1.0;
-    int image_width =  100;
-    int    samples_per_pixel = 10;
+    double aspect_ratio = 1.0;
+    int image_width = 100;
+    int samples_per_pixel = 10;
     int max_depth = 10;
+    color background = color(0, 0, 0);
 
     double vfov = 90;  // Vertical view angle (field of view)
-    point3 lookfrom = point3(0,0,-1);  // Point camera is looking from
-    point3 lookat   = point3(0,0,0);   // Point camera is looking at
-    vec3   vup      = vec3(0,1,0);     // Camera-relative "up" direction
+    point3 lookfrom = point3(0, 0, -1);  // Point camera is looking from
+    point3 lookat = point3(0, 0, 0);   // Point camera is looking at
+    vec3 vup = vec3(0, 1, 0);     // Camera-relative "up" direction
 
     //???
     double defocus_angle = 0;
     double focus_dist = 10;
 
-    void render(const hittable& world) {
+    void render(const hittable &world) {
         initialize();
 
         std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -37,13 +38,13 @@ public:
         for (int j = 0; j < image_height; ++j) {
             std::clog << "\rScanlines remaining: ------------------" << image_height - j << ' ' << std::flush;
             for (int i = 0; i < image_width; ++i) {
-                color pixel_color(0.0,0.0,0.0);
+                color pixel_color(0.0, 0.0, 0.0);
                 #pragma omp parallel for
-                for(int sample =0; sample < samples_per_pixel; ++sample){
-                    ray r = get_ray(i,j);
-                    pixel_color+= ray_color(r, world, max_depth);
+                for (int sample = 0; sample < samples_per_pixel; ++sample) {
+                    ray r = get_ray(i, j);
+                    pixel_color += ray_color(r, world, max_depth);
                 }
-                write_color(std::cout,pixel_color,samples_per_pixel);
+                write_color(std::cout, pixel_color, samples_per_pixel);
             }
         }
         std::clog << "\nDone-------------------------------------\n";
@@ -56,10 +57,10 @@ private:
     point3 pixel00_loc;
     vec3 pixel_delta_u;
     vec3 pixel_delta_v;
-    vec3   u, v, w;        // Camera frame basis vectors
+    vec3 u, v, w;        // Camera frame basis vectors
 
-    vec3   defocus_disk_u;  // Defocus disk horizontal radius
-    vec3   defocus_disk_v;  // Defocus disk vertical radius
+    vec3 defocus_disk_u;  // Defocus disk horizontal radius
+    vec3 defocus_disk_v;  // Defocus disk vertical radius
 
 
     void initialize() {
@@ -71,9 +72,9 @@ private:
 
         //auto focal_length = (lookfrom - lookat).length();
         auto theta = degrees_to_radians(vfov);
-        auto h = tan(theta/2);
+        auto h = tan(theta / 2);
         auto viewport_height = 2 * h * focus_dist;
-        auto viewport_width = viewport_height * ((static_cast<double>(image_width)/image_height));//数值转换的时候要注意!!
+        auto viewport_width = viewport_height * ((static_cast<double>(image_width) / image_height));//数值转换的时候要注意!!
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.左手来判断叉乘结果
         w = unit_vector(lookfrom - lookat);
@@ -89,8 +90,8 @@ private:
         pixel_delta_u = viewport_u / image_width;
         pixel_delta_v = viewport_v / image_height;
         //计算像素中心值??
-        auto viewport_upper_left = center -(focus_dist * w)
-                                   - viewport_u/2 - viewport_v/2;
+        auto viewport_upper_left = center - (focus_dist * w)
+                                   - viewport_u / 2 - viewport_v / 2;
         pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         auto defocus_radius = focus_dist * tan(degrees_to_radians(defocus_angle / 2));
@@ -129,10 +130,10 @@ private:
     color ray_color(const ray &r, const hittable &world, int depth) const;
 };
 
-color camera::ray_color(const ray &r, const hittable &world, int depth) const{
+color camera::ray_color(const ray &r, const hittable &world, int depth) const {
     hit_record rec;
-    if(depth<=0)return color(0,0,0);
-    if(world.hit(r, interval(min_error,infinity), rec)){
+    if (depth <= 0)return color(0, 0, 0);
+    /*if(world.hit(r, interval(min_error,infinity), rec)){
         ray scattered;
         color atten;
         if (rec.mat->scatter(r, rec, atten, scattered))
@@ -142,6 +143,20 @@ color camera::ray_color(const ray &r, const hittable &world, int depth) const{
     vec3 unit_direction = unit_vector(r.direction());
     auto a = 0.5*(unit_direction.y() + 1.0);
     return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
+*/
+    if (!world.hit(r, interval(min_error, infinity), rec))
+        return background;
+
+    ray scattered;
+    color attenuation;
+    color color_from_emission = rec.mat->emitted(rec.u, rec.v, rec.p);
+
+    if (!rec.mat->scatter(r, rec, attenuation, scattered))
+        return color_from_emission;
+
+    color color_from_scatter = attenuation * ray_color(scattered, world, depth - 1);
+
+    return color_from_emission + color_from_scatter;
 }
 
 #endif //RAYTRACING_CAMERA_H
